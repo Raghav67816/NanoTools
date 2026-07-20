@@ -1,8 +1,0 @@
-[
-{
-  "directory": "/home/cooper/NanoTools/font_converter/build",
-  "command": "/usr/bin/c++  -isystem /usr/include/freetype2 -std=gnu++17 -o CMakeFiles/nanofont.dir/main.cpp.o -c /home/cooper/NanoTools/font_converter/main.cpp",
-  "file": "/home/cooper/NanoTools/font_converter/main.cpp",
-  "output": "CMakeFiles/nanofont.dir/main.cpp.o"
-}
-]

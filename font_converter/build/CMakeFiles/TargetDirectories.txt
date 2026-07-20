@@ -1,3 +1,0 @@
-/home/cooper/NanoTools/font_converter/build/CMakeFiles/nanofont.dir
-/home/cooper/NanoTools/font_converter/build/CMakeFiles/edit_cache.dir
-/home/cooper/NanoTools/font_converter/build/CMakeFiles/rebuild_cache.dir
