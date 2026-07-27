@@ -1,7 +1,9 @@
+import subprocess
 from cmd import Cmd
 from os import getcwd
 from struct import unpack
-from esptool.cmds import detect_chip, attach_flash, read_flash
+from os.path import exists
+from esptool.cmds import detect_chip, attach_flash, read_flash, write_flash, reset_chip
 
 def parse_partition_binary(path: str):
     if not path:
@@ -54,6 +56,7 @@ class NanoShell(Cmd):
         super(NanoShell, self).__init__()
 
         self.esp = None
+        self.addr = ""
 
     def do_connect(self, arg):
         if not arg:
@@ -81,6 +84,54 @@ class NanoShell(Cmd):
             partition.write(data)
 
         parse_partition_binary(file_name)
+
+    def do_set_flash_addr(self, arg):
+        if not arg:
+            print("Please specify address")
+            return 
+
+        self.addr = arg
+
+    def do_upload_pack(self, arg):
+        if not arg:
+            print("Please specify source folder")
+            return
+        
+        process = subprocess.Popen([
+            f'{getcwd()}/bin/mklittlefs', 
+            '-c', str(arg),
+            '-b', '4096', 
+            '-p', '256', 
+            '-s', '1441792',
+            f'{getcwd()}/image.bin'
+        ],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+        while True:
+            output = process.stdout.readline()
+            if output == "" and process.poll() is not None:
+                break
+
+            if output:
+                print(output.strip())
+
+        r_code = process.wait()
+        print(f"Process finished with: {r_code}")
+
+        if self.addr != None or self.addr != "":
+            print("Address not set. Abort.")
+            return
+
+        with open(f'{getcwd()}/image.bin', "rb") as fs_image:
+            write_flash(self.esp, ([self.addr, fs_image]))
+
+        print("Writing finished...")
+
+        reset_chip(self.esp)
+        print("Rebooting chip.")
 
 
     def do_exit(self, arg):
