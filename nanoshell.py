@@ -1,9 +1,9 @@
 import subprocess
 from cmd import Cmd
-from os import getcwd
+from os import getcwd, remove
 from struct import unpack
-from os.path import exists
-from esptool.cmds import detect_chip, attach_flash, read_flash, write_flash, reset_chip
+from os.path import getsize
+from esptool.cmds import detect_chip, attach_flash, read_flash, write_flash, reset_chip, detect_flash_size
 
 def parse_partition_binary(path: str):
     if not path:
@@ -84,6 +84,8 @@ class NanoShell(Cmd):
             partition.write(data)
 
         parse_partition_binary(file_name)
+        remove(f'{getcwd()}/partition.bin')
+
 
     def do_set_flash_addr(self, arg):
         if not arg:
@@ -121,17 +123,38 @@ class NanoShell(Cmd):
         r_code = process.wait()
         print(f"Process finished with: {r_code}")
 
-        if self.addr != None or self.addr != "":
+        if self.addr == None or self.addr == "":
             print("Address not set. Abort.")
             return
 
-        with open(f'{getcwd()}/image.bin', "rb") as fs_image:
-            write_flash(self.esp, ([self.addr, fs_image]))
+        target_filesize = getsize(f'{getcwd()}/image.bin') / (1024*1024)
+        flash_size = int(detect_flash_size(self.esp).replace("MB", "")) / (1024*1024)
+        perm = str(input(f"{target_filesize:.2f} MB out of {flash_size:.2f} will be used. Do you wish to process [Y or n]: ")).lower()
 
-        print("Writing finished...")
+        if perm == "" or perm == "y":
+            while True:
+                output = process.stdout.readline()
+                if output == "" and process.poll() is not None:
+                    break
 
-        reset_chip(self.esp)
-        print("Rebooting chip.")
+                if output:
+                    print(output.strip())
+            print(f"Process finished with: {r_code}")
+
+            if isinstance(self.addr, str):
+                self.addr = int(self.addr, 16)
+
+            with open(f'{getcwd()}/image.bin', "rb") as fs_image:
+                write_flash(self.esp, [(self.addr, fs_image)])
+
+            print("Writing finished...")
+
+            reset_chip(self.esp)
+            print("Rebooting chip.")
+
+        else:
+            print("Operation aborted by user.")
+            return
 
 
     def do_exit(self, arg):
