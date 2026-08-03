@@ -26,7 +26,7 @@ def pack_files(dir_path):
 
     files = discover_files(dir_path)
 
-    if not files:
+    if len(files) == 0 or files == None:
         print("No files found.")
         return
 
@@ -56,7 +56,7 @@ def pack_files(dir_path):
 
         for file in files:
 
-            offset = bin_out.tell()
+            r_offset = bin_out.tell() - data_offset
 
             data = file.read_bytes()
 
@@ -65,7 +65,7 @@ def pack_files(dir_path):
             entries.append(
                 (
                     file.name,
-                    offset,
+                    r_offset,
                     len(data),
                 )
             )

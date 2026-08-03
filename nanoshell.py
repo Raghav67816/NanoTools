@@ -5,6 +5,8 @@ from struct import unpack
 from os.path import getsize
 from esptool.cmds import detect_chip, attach_flash, read_flash, write_flash, reset_chip, detect_flash_size
 
+from explorer import unpack_image
+
 def parse_partition_binary(path: str):
     if not path:
         print("Partition file not specified.")
@@ -56,6 +58,8 @@ class NanoShell(Cmd):
         super(NanoShell, self).__init__()
 
         self.esp = None
+        self.image_path = ""
+        self.files_unpacked = []
         self.addr = ""
 
     def do_connect(self, arg):
@@ -156,6 +160,23 @@ class NanoShell(Cmd):
             print("Operation aborted by user.")
             return
 
+
+    def do_unpack_image(self, image_path):
+        self.image_path = image_path
+        self.files_unpacked = unpack_image(image_path)
+
+    def do_ls(self, image_path):
+        if self.image_path == "":
+            print("Please unpack an image first.")
+            return
+
+        print("============== FILES ==============")
+
+        for file in self.files_unpacked:
+            print(f"Filename: {file['name']}")
+            print(f"Size: {file['size'] / 1024:.2f} KB")
+
+        print("============== END ==============")
 
     def do_exit(self, arg):
         print("Exiting...")
