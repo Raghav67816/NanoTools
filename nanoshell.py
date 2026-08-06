@@ -5,6 +5,7 @@ from struct import unpack
 from os.path import getsize
 from esptool.cmds import detect_chip, attach_flash, read_flash, write_flash, reset_chip, detect_flash_size
 
+from packer import pack_files
 from explorer import unpack_image
 
 def parse_partition_binary(path: str):
@@ -160,12 +161,19 @@ class NanoShell(Cmd):
             print("Operation aborted by user.")
             return
 
+    def do_pack(self, folder_path):
+        if not folder_path:
+            print("Please specify folder path.")
+            return
+
+        pack_files(folder_path)
+
 
     def do_unpack_image(self, image_path):
         self.image_path = image_path
         self.files_unpacked = unpack_image(image_path)
 
-    def do_ls(self, image_path):
+    def do_ls(self, arg):
         if self.image_path == "":
             print("Please unpack an image first.")
             return
