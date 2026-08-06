@@ -1,5 +1,6 @@
 import struct
 from pathlib import Path
+from os import mkdir, getcwd
 
 HEADER_FORMAT = "<4sHHIII"
 ENTRY_FORMAT = "<32sII"
@@ -38,7 +39,9 @@ def pack_files(dir_path):
 
     entries = []
 
-    with open("assets.npack", "wb") as bin_out:
+    mkdir(f"{getcwd()}/dist")
+
+    with open(f"{getcwd()}/dist/assets.npack", "wb") as bin_out:
 
         bin_out.write(
             struct.pack(
@@ -90,5 +93,3 @@ def pack_files(dir_path):
     print(f"Packed {count} assets into assets.npack")
 
 
-if __name__ == "__main__":
-    pack_files("./test")

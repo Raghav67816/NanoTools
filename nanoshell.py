@@ -1,6 +1,6 @@
 import subprocess
 from cmd import Cmd
-from os import getcwd, remove
+from os import getcwd, remove, mkdir
 from struct import unpack
 from os.path import getsize
 from esptool.cmds import detect_chip, attach_flash, read_flash, write_flash, reset_chip, detect_flash_size
