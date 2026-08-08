@@ -253,8 +253,8 @@ class NanoShell(Cmd):
             return
 
         target_filesize = getsize(f'{getcwd()}/image.bin') / (1024*1024)
-        flash_size = int(detect_flash_size(self.esp).replace("MB", "")) / (1024*1024)
-        perm = str(input(f"{target_filesize:.2f} MB out of {flash_size:.2f} will be used. Do you wish to process [Y or n]: ")).lower()
+        flash_size = detect_flash_size(self.esp)
+        perm = str(input(f"{target_filesize:.2f} MB out of {flash_size} will be used. Do you wish to process [Y or n]: ")).lower()
 
         if perm == "" or perm == "y":
             while True:
