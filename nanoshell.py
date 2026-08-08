@@ -1,19 +1,24 @@
+import struct
 import subprocess
 from cmd import Cmd
-from os import getcwd, remove, mkdir
-from struct import unpack
+from pathlib import Path
 from os.path import getsize
+from os import mkdir, getcwd
+from os import getcwd, remove, mkdir
 from esptool.cmds import detect_chip, attach_flash, read_flash, write_flash, reset_chip, detect_flash_size
 
-from packer import pack_files
-from explorer import unpack_image
+HEADER_FORMAT = "<4sHHIII"
+ENTRY_FORMAT = "<32sII"
+
+HEADER_SIZE = struct.calcsize(HEADER_FORMAT)
+ENTRY_SIZE = struct.calcsize(ENTRY_FORMAT)
 
 def parse_partition_binary(path: str):
     if not path:
         print("Partition file not specified.")
         return
     
-    bin_format = '<2s B B I I 16s I'
+    bin_format = '<2sBBII16sI'
     size = 32
 
     with open(path, "rb") as bin:
@@ -24,7 +29,7 @@ def parse_partition_binary(path: str):
             if len(chunk) < size:
                 break
 
-            magic, p_type, sub_type, offset, part_size, name, flags = unpack(bin_format, chunk)
+            magic, p_type, sub_type, offset, part_size, name, flags = struct.unpack(bin_format, chunk)
             name_str = name.decode("utf-8", errors="ignore").strip("\x00")
 
             if magic == b"\xff\xff" or not name_str:
@@ -50,6 +55,121 @@ def parse_partition_binary(path: str):
                 f"{hex(offset):<10} | "
                 f"{part_size / 1024:>10.2f}"
             )
+
+
+def discover_files(dir_path):
+    if not dir_path:
+        print("Directory path not provided.")
+        return []
+
+    files = []
+
+    for file in Path(dir_path).iterdir():
+        if file.is_file():
+            files.append(file)
+
+    return files
+
+
+def pack_files(dir_path):
+
+    files = discover_files(dir_path)
+
+    if len(files) == 0 or files == None:
+        print("No files found.")
+        return
+
+    count = len(files)
+
+    table_offset = HEADER_SIZE
+    table_size = ENTRY_SIZE * count
+    data_offset = table_offset + table_size
+
+    entries = []
+
+    mkdir(f"{getcwd()}/dist")
+
+    with open(f"{getcwd()}/dist/assets.npack", "wb") as bin_out:
+
+        bin_out.write(
+            struct.pack(
+                HEADER_FORMAT,
+                b"NPAK",
+                1,
+                count,
+                table_offset,
+                data_offset,
+                0,
+            )
+        )
+
+        bin_out.write(b"\x00" * table_size)
+
+        for file in files:
+
+            r_offset = bin_out.tell() - data_offset
+
+            data = file.read_bytes()
+
+            bin_out.write(data)
+
+            entries.append(
+                (
+                    file.name,
+                    r_offset,
+                    len(data),
+                )
+            )
+
+        bin_out.seek(table_offset)
+
+        for name, offset, size in entries:
+
+            name_bytes = name.encode("utf-8")[:31]
+            name_bytes += b"\x00"
+            name_bytes = name_bytes.ljust(32, b"\x00")
+
+            bin_out.write(
+                struct.pack(
+                    ENTRY_FORMAT,
+                    name_bytes,
+                    offset,
+                    size,
+                )
+            )
+
+    print(f"Packed {count} assets into assets.npack")
+
+def unpack_image(path):
+    if not path:
+        print("Image path not specified.")
+        return
+
+    out_data = []
+
+    bin_data = open(path, "rb")
+    data = bin_data.read()
+
+    header = data[:HEADER_SIZE]
+    magic, version, count, table_offset, data_offset, flags = struct.unpack(HEADER_FORMAT, header)
+
+    for i in range(count):
+        start = table_offset + (ENTRY_SIZE * i)
+        end = start + ENTRY_SIZE
+
+        entry_data = data[start:end]
+        name, offset, size = struct.unpack(ENTRY_FORMAT, entry_data)
+
+        name = name.rstrip(b"\x00").decode("utf-8")
+
+        entry = {
+            "name": name,
+            "size": size
+        }
+
+        out_data.append(entry)
+
+    return out_data
 
 class NanoShell(Cmd):
     prompt = "nano> "
