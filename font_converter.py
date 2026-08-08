@@ -2,6 +2,8 @@ import struct
 import argparse
 from PIL import ImageFont, Image, ImageDraw
 
+FONT_FORMAT = '<IBBbbH'
+
 def generate_font_bin(ttf_path, output_path, font_size, first_char=32, last_char=126):
     font = ImageFont.truetype(ttf_path, font_size)
 
@@ -53,14 +55,14 @@ def generate_font_bin(ttf_path, output_path, font_size, first_char=32, last_char
         current_offset += data_size
 
     with open(output_path, 'wb') as bin_file:
-        header = struct.pack('<4sHHHHH', b'FONT', 1, len(glyph_metrics), font_size, 0, 0)
+        header = struct.pack('<4sHHHHH', b'FONT', 1, len(glyph_metrics), font_size, first_char, last_char)
         bin_file.write(header)
 
 
         for metric in glyph_metrics:
             bin_file.write(
                 struct.pack(
-                    '<IBBbbH',
+                    FONT_FORMAT,
                     metric[0],
                     metric[1],
                     metric[2],
