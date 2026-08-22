@@ -4,11 +4,21 @@ Design, develop and deploy faster with NanoUI tools. No more C arrays for your a
 
 Now upload your assets directly into SPIFFS partition and load assets using **FileManager (NanoUI)**. No more re-compiling just to change an icon.
 
-## Features
+## Tools
  - .ttf to bin converter
  - nanoshell (interact with your ESP based boards with ease.)
 
 Please note that **nanoshell only works with ESP ecosystem. Support for more hardware will be coming soon**
+
+## Installation
+
+ - Go to release page and download latest release
+ - Unpack the .zip file
+ - Execute binary you want to use
+
+ Visit [documentation](https://raghav67816.github.io/NanoUI-Web/Tools/NanoFS.html) for usage details.
+
+ If you are using MacOS, please replace the current **mklittlefs** binary with MacOS build from [mklittlefs latest release](https://github.com/earlephilhower/mklittlefs/releases)
 
 ## Font Converter Usage
 
@@ -41,3 +51,5 @@ font-converter.bin ./font.ttf ./data/font.bin 18
 ```
 
 This creates a glyph of 18px characters where first character start at **32** and last character is at **125** by default.
+
+**Please visit [NanoFS Docs](https://raghav67816.github.io/NanoUI-Web/Tools/NanoFS.html) for it's detailed usage**
