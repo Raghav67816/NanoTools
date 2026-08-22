@@ -272,6 +272,7 @@ class NanoShell(Cmd):
             with open(f'{getcwd()}/image.bin', "rb") as fs_image:
                 write_flash(self.esp, [(self.addr, fs_image)])
 
+            remove(f"{getcwd()}/image.bin")
             print("Writing finished...")
 
             reset_chip(self.esp)
